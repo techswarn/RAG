@@ -3,7 +3,7 @@ from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
-from langchain_community.document_loaders import PDFPlumberLoader
+from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from langchain.prompts import PromptTemplate
@@ -22,7 +22,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 raw_prompt = PromptTemplate.from_template(
     """ 
-    <s>[INST] You are a technical assistant good at searching docuemnts. If you do not have an answer from the provided information say so. [/INST] </s>
+    <s>[INST] You are a technical assistant good at reading CSV files. If you do not have an answer from the provided information say so. [/INST] </s>
     [INST] {input}
            Context: {context}
            Answer:
@@ -48,7 +48,7 @@ def aiPost():
 
 
 @app.route("/ask_pdf", methods=["POST"])
-def askPDFPost():
+def askCSVPost():
     print("Post /ask_pdf called")
     json_content = request.json
     query = json_content.get("query")
@@ -80,19 +80,21 @@ def askPDFPost():
             {"source": doc.metadata["source"], "page_content": doc.page_content}
         )
 
-    response_answer = {"answer": result["answer"], "sources": sources}
+    response_answer = {"answer": result["answer"]}
     return response_answer
 
 
-@app.route("/pdf", methods=["POST"])
+@app.route("/csv", methods=["GET"])
 def pdfPost():
-    file = request.files["file"]
-    file_name = file.filename
-    save_file = "pdf/" + file_name
-    file.save(save_file)
-    print(f"filename: {file_name}")
+    # file = request.files["file"]
+    # file_name = file.filename
+    # save_file = "csv/" + file_name
+    # file.save(save_file)
+    # print(f"filename: {file_name}")
 
-    loader = PDFPlumberLoader(save_file)
+    save_fie = "csv/" + "sample.csv"
+
+    loader = CSVLoader(file_path=save_fie)
     docs = loader.load_and_split()
     print(f"docs len={len(docs)}")
 
@@ -107,7 +109,7 @@ def pdfPost():
 
     response = {
         "status": "Successfully Uploaded",
-        "filename": file_name,
+        "filename": "file_name",
         "doc_len": len(docs),
         "chunks": len(chunks),
     }
